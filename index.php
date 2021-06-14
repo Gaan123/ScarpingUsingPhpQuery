@@ -46,12 +46,12 @@ $fp = fopen('otaus'.time().'.csv', 'w');
 fputcsv($fp, [
     'Practice Name',
     'Contact Name',
+    'Phone',
     'Address Street',
     'Address City',
     'Address State',
     'Address PostCode',
     'Address Country',
-    'Phone',
     'Funding Scheme',
     'Area(s) of Practice',
 ]);
@@ -65,19 +65,25 @@ foreach ($idsQueryArr as $k => $value) {
 //        $child=$key+1;
         $address = pq(".results__item:nth-child($i) .content .content__row .main-contact-content p:nth-child(3)")->text();
         $addressArrByNewLine = preg_split('/\r\n|\r|\n/', trim($address));
-        $addressArr = isset($addressArrByNewLine[1]) ? explode(',', $addressArrByNewLine[1]) : [];
+        $addNewLineCount =count($addressArrByNewLine);
+        $countryKey=$addNewLineCount===3?2:1;
+        $addrKey=$addNewLineCount===3?1:0;
+        $street = isset($addressArrByNewLine[0])&&$addNewLineCount===3 ? trimWhiteSpace($addressArrByNewLine[0]) : '-';
+        $addressArr = isset($addressArrByNewLine[$addrKey]) ? explode(',', $addressArrByNewLine[$addrKey]) : [];
+
+
 
         $info = pq(".results__item:nth-child($i) .content__col:nth-child(2) p")->html();
         $infoArr = explode('<br>', $info);
         fputcsv($fp,[
-            'p_name' => pq(".results__item:nth-child($i) .title__tag")->text(),
+            'p_name' => trimWhiteSpace(pq(".results__item:nth-child($i) .title__tag")->text()),
             'c_name' => pq(".results__item:nth-child($i) .main-contact-content p strong.name")->text(),
             'phone' => pq(".results__item:nth-child($i) .content .content__row .main-contact-content p:nth-child(6) a")->text(),
-            'street' => isset($addressArrByNewLine[0]) ? trimWhiteSpace($addressArrByNewLine[0]) : '-',
+            'street' => $street,
             'city' => isset($addressArr[0]) ? trimWhiteSpace($addressArr[0]) : '-',
             'state' => isset($addressArr[1]) ? trimWhiteSpace($addressArr[1]) : '-',
             'postal_code' => isset($addressArr[2]) ? trimWhiteSpace($addressArr[2]) : '-',
-            'country' => isset($addressArrByNewLine[2]) ? trimWhiteSpace($addressArrByNewLine[2]) : '-',
+            'country' => isset($addressArrByNewLine[$addNewLineCount]) && $addressArrByNewLine[$addNewLineCount]=='Australia'? trimWhiteSpace($addressArrByNewLine[$addNewLineCount]) : 'Australia',
             'funding' => getDescription($infoArr, 'Funding Scheme(s):'),
             'pratice' => getDescription($infoArr, 'Area(s) of Practice:'),
         ]);
